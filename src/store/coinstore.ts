@@ -45,24 +45,17 @@ export const useCoinStore = create<CoinStore>((set) => ({
           const firestoreData = snapshot.data();
           set({
             ...firestoreData,
-            loading: false,
           });
           console.log("✅ Datos cargados desde Firestore");
         } else {
           console.warn("⚠️ Store no encontrado.");
-          set({
-            loading: false,
-          });
         }
       },
       (error) => {
         console.error("❌ Error en onSnapshot:", error);
-        set({
-          loading: false,
-        });
       },
     );
-
+    set({ loading: false });
     const res = await fetch("/api/scrapper");
     const data = await res.json();
     console.log("Se cargaron datos de la web");
