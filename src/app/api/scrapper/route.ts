@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
-import { chromium } from "playwright";
+import { chromium, Browser } from "playwright"; // Importamos el tipo Browser
 
 export async function GET() {
   console.log("🚀 Iniciando scraping con Playwright...");
 
-  let browser;
+  // 1. Tipamos la variable correctamente
+  let browser: Browser | null = null;
+
   try {
-    const browser = await chromium.launch({ headless: true });
+    // 2. IMPORTANTE: Quitamos el "const" para usar la variable de arriba
+    browser = await chromium.launch({ headless: true });
+
     const context = await browser.newContext({
       userAgent:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       viewport: { width: 1280, height: 800 },
     });
+
     const page = await context.newPage();
 
     await page.goto("https://www.coingecko.com/es", {
@@ -28,12 +33,12 @@ export async function GET() {
     const data = await page.evaluate(() => {
       const rows = Array.from(document.querySelectorAll("table tbody tr"));
       return rows.map((row) => {
-        const cols = Array.from(row.querySelectorAll("td")).map((col) =>
-          col.innerText.trim(),
+        const cols = Array.from(row.querySelectorAll("td")).map(
+          (col) => (col as HTMLElement).innerText.trim(), // Cast a HTMLElement para evitar errores de DOM
         );
 
         const [name, symbol] = (() => {
-          const parts = cols[2].split(" ");
+          const parts = (cols[2] || "").split(" ");
           const symbol = parts.pop();
           const name = parts.join(" ");
           return [name, symbol];
@@ -52,11 +57,11 @@ export async function GET() {
 
     await browser.close();
 
-    return NextResponse.json({
-      data,
-    });
+    return NextResponse.json({ data });
   } catch (error: any) {
-    if (browser) await browser.close();
+    // 3. Ahora TypeScript sabe que si browser existe, tiene el método close
+    if (browser) await (browser as Browser).close();
+
     console.error("❌ Error Playwright:", error.message);
     return NextResponse.json(
       {
