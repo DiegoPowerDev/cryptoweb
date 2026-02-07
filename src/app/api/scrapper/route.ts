@@ -16,10 +16,18 @@ export async function GET() {
 
     browser = await puppeteer.launch({
       args: chromium.args,
-      // Usamos el casting 'as any' o valores manuales para evitar el error de tipado de la librería
-      defaultViewport: chromium.defaultViewport as any,
+      // En lugar de llamar a chromium.defaultViewport, usamos el objeto manual
+      defaultViewport: {
+        width: 1280,
+        height: 800,
+        deviceScaleFactor: 1,
+        isMobile: false,
+        hasTouch: false,
+        isLandscape: true,
+      },
       executablePath: executablePath,
-      headless: chromium.headless as any,
+      // Forzamos el booleano según el entorno
+      headless: isLocal ? false : true,
     });
 
     const page = await browser.newPage();
