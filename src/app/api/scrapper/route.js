@@ -32,17 +32,32 @@ export async function GET() {
     });
 
     const page = await browser.newPage();
-
+    await page.setRequestInterception(true);
+    page.on("request", (req) => {
+      const resourceType = req.resourceType();
+      if (["image", "font", "stylesheet", "media"].includes(resourceType)) {
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
     await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     );
 
+    // 3. Ir a la URL, pero esperar solo al DOM básico
     await page.goto("https://www.coingecko.com/es", {
-      waitUntil: "networkidle2",
-      timeout: 60000,
+      waitUntil: "domcontentloaded", // No esperes a que termine la red, solo el HTML
+      timeout: 30000,
     });
 
-    await page.waitForSelector("table tbody tr", { timeout: 30000 });
+    try {
+      await page.waitForSelector("table tbody tr", { timeout: 10000 });
+    } catch (e) {
+      // Si falla, sacamos una captura al log para ver qué está viendo el servidor (útil en logs de Vercel)
+      const title = await page.title();
+      throw new Error(`No se encontró la tabla. Título de la página: ${title}`);
+    }
 
     const data = await page.evaluate(() => {
       const rows = Array.from(document.querySelectorAll("table tbody tr"));
