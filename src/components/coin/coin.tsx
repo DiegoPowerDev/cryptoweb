@@ -25,7 +25,7 @@ export default function Coin() {
       ) : (
         <div className="h-full w-full">
           <div className="w-full flex justify-center">
-            <Searcher datos={coins} />
+            <Searcher />
           </div>
           <div className="bg-black grid lg:grid-cols-4 gap-10 p-10 md:grid-cols-3 sm:grid-cols-2 overflow-hidden h-full">
             {coins?.map((e, i) => (

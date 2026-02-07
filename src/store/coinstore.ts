@@ -8,6 +8,7 @@ import {
 } from "firebase/firestore";
 import { app } from "../lib/firebase";
 import { load } from "cheerio";
+import { FirebaseError } from "firebase/app";
 const db = getFirestore(app);
 
 interface Coin {
@@ -84,19 +85,11 @@ export const useCoinStore = create<CoinStore>((set) => ({
     );
 
     try {
-      await updateDoc(doc(db, "coins", "coins"), data);
-      console.log("💾 Datos guardados en Firestore");
+      await setDoc(doc(db, "coins", "coins"), data, { merge: true });
+      console.log("💾 Datos sincronizados en Firestore");
     } catch (err) {
-      console.error("❌ Error guardando:", err);
-      // Si falla por documento inexistente, intentar crearlo
-      if (err.code === "not-found") {
-        try {
-          await setDoc(doc(db, "coins", "coins"), { ...data });
-          console.log("📝 Documento creado después de error not-found");
-        } catch (setErr) {
-          console.error("❌ Error al crear documento:", setErr);
-        }
-      }
+      const error = err as FirebaseError; // Type assertion rápida
+      console.error("❌ Error de Firebase:", error.code);
     }
   },
 }));

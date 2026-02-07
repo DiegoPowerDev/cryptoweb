@@ -1,36 +1,52 @@
-import { useState } from "react";
+"use client";
+
+import { useState, FormEvent } from "react"; // 1. Importamos FormEvent
 import CoinValues from "../coinvalues";
+import { useCoinStore } from "@/store/coinstore";
 
-export default function Searcher(props) {
-  const { datos } = props;
+// Es mejor importar la interfaz desde tu store si ya existe allí
+interface Coin {
+  name: string;
+  symbol: string;
+  change1h: string;
+  change24h: string;
+  change7d: string;
+  price: string;
+}
 
-  const [searched, setSearched] = useState("");
+export default function Searcher() {
+  const coins = useCoinStore((s) => s.coins);
+
+  // 2. Inicializamos con null explícitamente
+  const [searched, setSearched] = useState<Coin | null>(null);
   const [lastSearch, setLastSearch] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
-  const onSubmit = (event) => {
+  // 3. Tipamos el evento como FormEvent
+  const onSubmit = (event: FormEvent) => {
     event.preventDefault();
 
-    const position = datos.findIndex((item) =>
+    const coinFound = coins.find((item) =>
       item.name.toLowerCase().includes(inputValue.toLowerCase()),
     );
 
-    if (position !== -1) {
-      setSearched(datos[position]);
+    if (coinFound) {
+      setSearched(coinFound);
       setLastSearch(true);
     } else {
       console.log("Elemento no encontrado");
+      setSearched(null);
       setLastSearch(false);
     }
   };
 
   return (
-    <div className="w-full h-full min-h-96  grid rounded-lg border-4  md:grid-cols-2  m-10 grid-rows-1 ">
-      <div className="text-white   content-center ">
+    <div className="w-full h-full min-h-96 grid rounded-lg border-4 md:grid-cols-2 m-10 grid-rows-1">
+      <div className="text-white content-center">
         <form onSubmit={onSubmit}>
-          <div className="grid  md:grid-cols-1 md:p-10 p-6 ">
+          <div className="grid md:grid-cols-1 md:p-10 p-6">
             <input
-              className="border-2 h-10 rounded-lg border-yellow-300 text-center"
+              className="border-2 h-10 rounded-lg border-yellow-300 text-center text-white"
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -44,10 +60,12 @@ export default function Searcher(props) {
           </div>
         </form>
       </div>
-      {!lastSearch ? (
+
+      {/* 4. Verificamos que searched no sea null antes de renderizar */}
+      {!lastSearch || !searched ? (
         <></>
       ) : (
-        <div className="p-4 md:border-l-2 md:border-t-0 border-t-2  border-white h-full grid grid-cols-1 grid-rows-[2fr_1fr] place-content-center gap-4">
+        <div className="p-4 md:border-l-2 md:border-t-0 border-t-2 border-white h-full grid grid-cols-1 grid-rows-[2fr_1fr] place-content-center gap-4">
           <CoinValues
             name={searched.name}
             icon={searched.symbol}
